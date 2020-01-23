@@ -11,17 +11,6 @@
 Pure Python implementation of bayesian global optimization with gaussian
 processes.
 
-* PyPI (pip):
-
-```console
-$ pip install bayesian-optimization
-```    
-
-* Conda from conda-forge channel:
-
-```console
-$ conda install -c conda-forge bayesian-optimization
-```    
 
 This is a constrained global optimization package built upon bayesian inference
 and gaussian process, that attempts to find the maximum value of an unknown
@@ -29,8 +18,8 @@ function in as few iterations as possible. This technique is particularly
 suited for optimization of high cost functions, situations where the balance
 between exploration and exploitation is important.
 
-## Important notice
-With the release of version 1.0.0 a number of API breaking changes were introduced. I understand this can be a headache for some, but these were necessary changes that needed to be done and ultimately made the package better. If you have used this package in the past I suggest you take the basic and advanced tours (found in the examples folder) in order to familiarize yourself with the new API.
+Important additions to the original version of the packages are categorical and discrete numerical variables, and handling high noise in the output of the optimised function
+
 
 ## Quick Start
 See below for a quick tour over the basics of the Bayesian Optimization package. More detailed information, other advanced features, and tips on usage/implementation can be found in the [examples](https://github.com/fmfn/BayesianOptimization/tree/master/examples) folder. I suggest that you:
@@ -268,36 +257,12 @@ load_logs(new_optimizer, logs=["./logs.json"]);
 
 This introduction covered the most basic functionality of the package. Checkout the [basic-tour](https://github.com/fmfn/BayesianOptimization/blob/master/examples/basic-tour.ipynb) and [advanced-tour](https://github.com/fmfn/BayesianOptimization/blob/master/examples/advanced-tour.ipynb) notebooks in the example folder, where you will find detailed explanations and other more advanced functionality. Also, browse the examples folder for implementation tips and ideas.
 
-Installation
-============
-
-### Installation
-
-The latest release can be obtained by two ways:
-
-* With PyPI (pip):
-
-      pip install bayesian-optimization
-    
-* With conda (from conda-forge channel):
-
-      conda install -c conda-forge bayesian-optimization
-
-The bleeding edge version can be installed with:
-
-    pip install git+https://github.com/fmfn/BayesianOptimization.git
-
-If you prefer, you can clone it and run the setup.py file. Use the following
-commands to get a copy from Github and install all dependencies:
-
-    git clone https://github.com/fmfn/BayesianOptimization.git
-    cd BayesianOptimization
-    python setup.py install
 
 ### Dependencies
 * Numpy
 * Scipy
 * Scikit-learn
+* sobol_seq
 
 ### References:
 * http://papers.nips.cc/paper/4522-practical-bayesian-optimization-of-machine-learning-algorithms.pdf
