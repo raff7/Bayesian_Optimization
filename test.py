@@ -282,7 +282,7 @@ optimizer = BayesianOptimization(
     yrange = expectedYbounds,
     verbose=2,
     random_state=1, 
-    alpha=0.5,
+    alpha=0.25,
     noisy=True,
     parall_option=1,
     print_timing=True
@@ -300,9 +300,10 @@ for i in range(100):
         n_iter=1,
         acq='nei',
         xi=0.00,
-        N_QMC=20,
+        N_QMC=25,
         optimizer_best_trials=2,
-        optimizer_random_trials=4
+        optimizer_random_trials=4,
+        optimizer_n_warmups=20000
     )
     plot2D(optimizer)
     print("Timing: {} seconds ({} minutes)".format(time.time()-t,(time.time()-t)/60))
