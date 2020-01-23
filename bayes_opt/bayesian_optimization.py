@@ -218,13 +218,13 @@ class BayesianOptimization(Observable):
         self.dispatch(Events.OPTMIZATION_START)
         self._prime_queue(init_points)
         self.set_gp_params(**gp_params)
-        # if(self.space.noisy):
-            # try:
-            #     assert acq == 'nei'
-            # except AssertionError:
-            #     raise ValueError(
-            #         "If working with a noisy function, please use 'nei' acquisition (using {} instead) do ".format(acq) 
-            #     )
+        if(self.space.noisy):
+            try:
+                assert acq == 'nei'
+            except AssertionError:
+                raise ValueError(
+                    "If working with a noisy function, please use 'nei' acquisition (using {} instead) do ".format(acq) 
+                )
             
         util = UtilityFunction(kind=acq, kappa=kappa, xi=xi,N_QMC=N_QMC)
         self.util = util

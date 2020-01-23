@@ -37,13 +37,9 @@ def hartmann6d(x1,x2,x3,x4,x5,x6):
         r -= alphas[i]* np.exp(ri)
     return -r
 def f(x,a=0):
-    r=0
-    if(a==0):
-        r = x * np.sin(x) + norm.pdf(x,loc=5,scale=0.35)*10
-    if(a==1):
-        r = x * np.sin(x) + norm.pdf(x,loc=9,scale=0.35)*10
-    if(a==2):
-        r = x * np.sin(x) + norm.pdf(x,loc=-1,scale=0.35)*10
+    
+    r = x * np.sin(x) + norm.pdf(x,loc=5,scale=0.35)*10
+    
     return r
 
 def noise(**params):
