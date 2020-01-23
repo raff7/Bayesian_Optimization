@@ -67,7 +67,7 @@ class Observable(object):
 
 
 class BayesianOptimization(Observable):
-    def __init__(self, f, pbounds, yrange=1, random_state=None, verbose=2,alpha=1e-6,nu=2.5,noisy=False,parameter_normalizer=1.5,parall_option=0):
+    def __init__(self, f, pbounds, yrange=1, random_state=None, verbose=2,alpha=1e-6,nu=2.5,noisy=False,parameter_normalizer=1.5,parall_option=1):
         #parameter normalizer is a parameter that decided within how many standard deviation the y limists should be, advised to be between 1 and 3 (lower is better as it avoids getting stuck due to low uncertainty where no data is avaiable)
         #parall_option is to chose the level of parallilazation of the optimizer: 0 is no parallelization, 1 is low level (only valid for NEI, parallel montecarlo estimation) and 2 is high level (when NEI parallel montecarlo estimation during grid search, and then swich to parallelize optimizer)
         """"""

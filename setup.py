@@ -5,9 +5,9 @@ setup(
     version='1.0.2',
     url='https://github.com/raff7/Bayesian_Optimization',
     packages=find_packages(),
-    author='Raffaele Piccini',
+    author='Fernando M. F. Nogueira, Raffaele Piccini',
     author_email="raffaele.piccini@mailonline.co.uk",
-    description='Bayesian Optimization package',
+    description='Extended Bayesian Optimization package',
     long_description='A Python implementation of global optimization with gaussian processes.',
     download_url='https://github.com/raff7/Bayesian_Optimization.git',
     install_requires=[

@@ -1,13 +1,13 @@
-from BayesianOptimization.bayes_opt import BayesianOptimization
+from bayes_opt import BayesianOptimization
 import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.gaussian_process.kernels import Matern
 from sklearn.gaussian_process import GaussianProcessRegressor
 from scipy.stats import norm
-from BayesianOptimization.bayes_opt.util import augKernel
-from BayesianOptimization.bayes_opt import JSONLogger
-from BayesianOptimization.bayes_opt.event import Events
-from BayesianOptimization.bayes_opt.util import load_logs
+from bayes_opt.util import augKernel
+from bayes_opt import JSONLogger
+from bayes_opt.event import Events
+from bayes_opt.util import load_logs
 import time
 def six_hump_camel(x1,x2):
     r = (4-2.1*(x1**2)+((x1**4)/3))*(x1**2) + (x1*x2) + (-4+4*(x2**2))*(x2**2)
@@ -36,10 +36,18 @@ def hartmann6d(x1,x2,x3,x4,x5,x6):
             ri -= A[i][j]*(xs[j]-P[i][j])**2
         r -= alphas[i]* np.exp(ri)
     return -r
-def f(x,y=0):
-    r = x * np.sin(x) + norm.pdf(x,loc=5,scale=0.35)*10
-    
+def f(x,a=0):
+    r=0
+    if(a==0):
+        r = x * np.sin(x) + norm.pdf(x,loc=5,scale=0.35)*10
+    if(a==1):
+        r = x * np.sin(x) + norm.pdf(x,loc=9,scale=0.35)*10
+    if(a==2):
+        r = x * np.sin(x) + norm.pdf(x,loc=-1,scale=0.35)*10
     return r
+
+def noise(**params):
+    return f(**params) + np.random.normal(loc=0,scale=0.5)
 def fr(a=0,b=0,c=0,d=0,x=0,y=0,z=0):
     if(isinstance(x,float)):
         x= round(x)
@@ -264,19 +272,19 @@ def plot2DCont(optimizer):
     plt.pause(0.5)
     plt.clf()
 
-# plt.ion()
-pbounds = {'x': (-10   , 10)}
+plt.ion()
+pbounds = {'x': (-10   , 10),'a':(3,'d')}
 # pbounds ={'x1':(0,1),'x2':(0,1),'x3':(0,1),'x4':(0,1),'x5':(0,1),'x6':(0,1)}
-expectedYbounds = (0,3)
+expectedYbounds = (-3,8)
 optimizer = BayesianOptimization(
-    f=f,#lambda x:f(x)+np.random.normal(loc=0,scale=1),
+    f=noise,
     pbounds=pbounds,
     yrange = expectedYbounds,
     verbose=2,
-    random_state=2, 
-    alpha=0.00009,
-    noisy=False,
-    parall_option=2
+    random_state=1, 
+    alpha=0.5,
+    noisy=True,
+    parall_option=1
   
 )
 # load_logs(optimizer, logs=["./logs.json"])
@@ -287,13 +295,13 @@ optimizer = BayesianOptimization(
 for i in range(100):
     t = time.time()
     optimizer.maximize(
-        init_points=10,
-        n_iter=100,
+        init_points=0,
+        n_iter=1,
         acq='nei',
         xi=0.00,
         N_QMC=20,
-        optimizer_best_trials=4,
-        optimizer_random_trials=100
+        optimizer_best_trials=2,
+        optimizer_random_trials=4
     )
+    plot2D(optimizer)
     print("Timing: {} seconds ({} minutes)".format(time.time()-t,(time.time()-t)/60))
-    # plot(optimizer)
