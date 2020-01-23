@@ -118,7 +118,8 @@ class Acquisitor():
                 x_max = res.x
                 max_acq = -res.fun[0]
                 # print("BESTED_>")
-            print("done {}/{} in {}".format(counter,n_rand_iter+n_best_iter,time()-t))
+            if(self.print_timing):
+                print("done {}/{} in {}".format(counter,n_rand_iter+n_best_iter,time()-t))
         # Explore the parameter space more throughly
         x_seeds = self.random_state.uniform(bounds[:, 0], bounds[:, 1],
                                         size=(n_rand_iter, bounds.shape[0]))
@@ -143,7 +144,8 @@ class Acquisitor():
                 x_max = res.x
                 max_acq = -res.fun[0]
                 # print("BESTED_>")
-            print("done {}/{} in {}".format(counter,n_rand_iter+n_best_iter,time()-t))
+            if(self.print_timing):
+                print("done {}/{} in {}".format(counter,n_rand_iter+n_best_iter,time()-t))
         if(low_level_parall):
             pool.close()
         # Clip output to make sure it lies within the bounds. Due to floating
@@ -161,7 +163,8 @@ class Acquisitor():
                         method="L-BFGS-B")
 
             # See if success
-            print("Done an iteration in parallel in {}".format(time()-t))
+            if(self.print_timing):
+                print("Done an iteration in parallel in {}".format(time()-t))
             if  res.success:
                 return res.x, -res.fun[0]
 

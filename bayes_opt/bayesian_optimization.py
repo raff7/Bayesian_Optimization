@@ -67,7 +67,7 @@ class Observable(object):
 
 
 class BayesianOptimization(Observable):
-    def __init__(self, f, pbounds, yrange=1, random_state=None, verbose=2,alpha=1e-6,nu=2.5,noisy=False,parameter_normalizer=1.5,parall_option=1):
+    def __init__(self, f, pbounds, yrange=1, random_state=None, verbose=2,alpha=1e-6,nu=2.5,noisy=False,parameter_normalizer=1.5,parall_option=1,print_timing = False):
         #parameter normalizer is a parameter that decided within how many standard deviation the y limists should be, advised to be between 1 and 3 (lower is better as it avoids getting stuck due to low uncertainty where no data is avaiable)
         #parall_option is to chose the level of parallilazation of the optimizer: 0 is no parallelization, 1 is low level (only valid for NEI, parallel montecarlo estimation) and 2 is high level (when NEI parallel montecarlo estimation during grid search, and then swich to parallelize optimizer)
         """"""
@@ -76,7 +76,7 @@ class BayesianOptimization(Observable):
         # Data structure containing the function to be optimized, the bounds of
         # its domain, and a record of the evaluations we have done so far
         
-
+        self.print_timing = print_timing
         # queue
         self._queue = Queue()
         if(isinstance(yrange,int)):#set an expected confidence interval
@@ -162,7 +162,8 @@ class BayesianOptimization(Observable):
             tp2=time()
             suggestion = acquisitor.parall_acq_max(n_best_iter=optimizer_best_trials,n_rand_iter=optimizer_random_trials,n_warmup=optimizer_n_warmups)
             tp2 = time()-tp2
-            print(tp2)
+            if(self.print_timing):
+                print(tp2)
         else:
             t = time()
             if(self.parall_option==0):
@@ -174,7 +175,8 @@ class BayesianOptimization(Observable):
                     "Parallelization option should be 0 (none) 1 (low level) or 2 (high level) (used {} instead) do ".format(self.parall_option) 
                 )
             t = time()-t
-            print(t)
+            if(self.print_timing):
+                print(t)
         return suggestion
 
     def _prime_queue(self, init_points):

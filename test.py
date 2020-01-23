@@ -284,7 +284,8 @@ optimizer = BayesianOptimization(
     random_state=1, 
     alpha=0.5,
     noisy=True,
-    parall_option=1
+    parall_option=1,
+    print_timing=True
   
 )
 # load_logs(optimizer, logs=["./logs.json"])
