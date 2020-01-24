@@ -36,14 +36,16 @@ def hartmann6d(x1,x2,x3,x4,x5,x6):
             ri -= A[i][j]*(xs[j]-P[i][j])**2
         r -= alphas[i]* np.exp(ri)
     return -r
-def f(x,a=0):
+def f(x):
     
     r = x * np.sin(x) + norm.pdf(x,loc=5,scale=0.35)*10
     
     return r
 
 def noise(**params):
-    return f(**params) + np.random.normal(loc=0,scale=0.5)
+    return hartmann6d(**params) + np.random.normal(loc=0,scale=0.2)
+def noise2D(**params):
+    return f(**params) + np.random.normal(loc=0,scale=0.2)
 def fr(a=0,b=0,c=0,d=0,x=0,y=0,z=0):
     if(isinstance(x,float)):
         x= round(x)
@@ -73,29 +75,6 @@ def fc(a=0,x=0,y=0):
         TypeError
     return r
 
-def gpFit(X,y):
-    X = np.array(X).reshape(-1,1)
-    y = np.array(X).reshape(-1,1)
-    gp = GaussianProcessRegressor(   
-        kernel=Matern(nu=2.5),
-        alpha=0.00005,
-        normalize_y=True,
-        n_restarts_optimizer=5,
-        random_state=5,
-        )
-    gp.fit(X,y)
-    x = np.atleast_2d(np.linspace(0, 10, 1000000)).T
-    pp=np.array([np.array([i[0],0]) for i in x])
-    y_pred, sigma = gp.predict(pp, return_std=True)
-    plt.fill(np.concatenate([x, x[::-1]]),
-            np.concatenate([y_pred - 5 * sigma,
-                            (y_pred + 5 * sigma)[::-1]]),
-            alpha=.5, fc='b', ec='None')
-    plt.plot(x, y_pred, 'b-')
-    plt.plot(X, y, 'r.', markersize=10)
-    plt.draw()
-    plt.pause(0.5)
-    plt.clf()
 
 def plot(optimizer):
     #plotter for 1d function
@@ -103,19 +82,10 @@ def plot(optimizer):
     X = optimizer._space.params
     X1d=X
     y = optimizer._space.target
-    x = np.atleast_2d(np.linspace(-10, 10, 1000)).T
+    x = np.atleast_2d(np.linspace(-25, 25, 1000)).T
     a = [0,1,2]
     gp = optimizer._gp
-    # gp = GaussianProcessRegressor(
-    #         kernel=augKernel(nu=2.5),
-    #         alpha=0.00001,
-    #         normalize_y=True,
-    #         n_restarts_optimizer=5,
-    #         random_state=19,
-            
-    #     )
-    # gp.fit(X,y)
-    # pp=np.array([np.array([i[0],0]) for i in x])
+
     y_pred, sigma = gp.predict(x, return_std=True)
     plt.clf()
     fig, (ax1) = plt.subplots(1, 1,figsize=(15,5))
@@ -269,23 +239,24 @@ def plot2DCont(optimizer):
     plt.clf()
 
 plt.ion()
-pbounds = {'x': (-10   , 10),'a':(3,'d')}
+pbounds = {'x': (-20   , 20)}
 # pbounds ={'x1':(0,1),'x2':(0,1),'x3':(0,1),'x4':(0,1),'x5':(0,1),'x6':(0,1)}
-expectedYbounds = (-3,8)
+expectedYbounds = (-10,15)
+# expectedYbounds = (-3,3)
 optimizer = BayesianOptimization(
-    f=noise,
+    f=noise2D,
     pbounds=pbounds,
     yrange = expectedYbounds,
     verbose=2,
     random_state=1, 
-    alpha=0.25,
+    alpha=0.2,
     noisy=True,
     parall_option=1,
-    print_timing=True
+    print_timing=False
   
 )
 # load_logs(optimizer, logs=["./logs.json"])
-# logger = JSONLogger(path="./logs.json")
+# logger = JSONLogger(path="./logs_EI.json")
 # optimizer.subscribe(Events.OPTMIZATION_STEP, logger)
 # optimizer.probe(params=[1],lazy=False,)
 
@@ -294,12 +265,12 @@ for i in range(100):
     optimizer.maximize(
         init_points=0,
         n_iter=1,
-        acq='nei',
-        xi=0.00,
+        acq='ei',
+        xi=0.10,
         N_QMC=25,
         optimizer_best_trials=2,
-        optimizer_random_trials=4,
+        optimizer_random_trials=250,
         optimizer_n_warmups=20000
     )
-    plot2D(optimizer)
+    plot(optimizer)
     print("Timing: {} seconds ({} minutes)".format(time.time()-t,(time.time()-t)/60))
