@@ -67,7 +67,7 @@ class Observable(object):
 
 
 class BayesianOptimization(Observable):
-    def __init__(self, f, pbounds, yrange=1, random_state=None, verbose=2,alpha=1e-6,nu=2.5,noisy=False,parameter_normalizer=1.5,parall_option=1,print_timing = False):
+    def __init__(self, f, pbounds, yrange=1, random_state=None, verbose=2,alpha=1e-6,nu=2.5,noisy=False,parameter_normalizer=0.5,parall_option=1,print_timing = False):
         #parameter normalizer is a parameter that decided within how many standard deviation the y limists should be, advised to be between 1 and 3 (lower is better as it avoids getting stuck due to low uncertainty where no data is avaiable)
         #parall_option is to chose the level of parallilazation of the optimizer: 0 is no parallelization, 1 is low level (only valid for NEI, parallel montecarlo estimation) and 2 is high level (when NEI parallel montecarlo estimation during grid search, and then swich to parallelize optimizer)
         """"""
@@ -85,7 +85,7 @@ class BayesianOptimization(Observable):
             _yrange = yrange[1]-yrange[0]
 
 
-        self._norm_constant = _yrange/(parameter_normalizer*2)#1.96 = 95% confidence intervall (0.05 probability of getting elements outside this range)
+        self._norm_constant = _yrange/(parameter_normalizer*2)#1.96 = 95% confidence intervall (all points are within 95% confidence interval of the prior)
         self._original_f = f
         self._space = TargetSpace(self.normalizedF, pbounds, random_state,norm_constant=self._norm_constant,noisy=noisy)
         # lambda **params:f(**params)/self._norm_constant
@@ -119,14 +119,23 @@ class BayesianOptimization(Observable):
         return self._space
 
     @property
-    def max(self):
-        mx = self._space.max()
-        mx['target'] = mx['target']*self._norm_constant
+    def real_max(self):
+        mx = self._space.real_max()
+        mx['target'] = mx['target']
+        return mx
+    @property
+    def normalized_max(self):
+        mx = self._space.normalized_max()
+        mx['target'] = mx['target']
         return mx
 
     @property
-    def res(self):
-        return self._space.res()
+    def real_res(self):
+        return self._space.real_res()
+    
+    @property
+    def normalized_res(self):
+        return self._space.normalized_res()
 
     def register(self, params, target):
         """Expect observation with known target"""
@@ -150,7 +159,7 @@ class BayesianOptimization(Observable):
         # we don't really need to see them here.
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            self._gp.fit(self._space.params, self._space.target)
+            self._gp.fit(self._space.params, self._space.normalized_target)
 
         # Finding argmax of the acquisition function.
         acquisitor = Acquisitor(
@@ -218,13 +227,13 @@ class BayesianOptimization(Observable):
         self.dispatch(Events.OPTMIZATION_START)
         self._prime_queue(init_points)
         self.set_gp_params(**gp_params)
-        if(self.space.noisy):
-            try:
-                assert acq == 'nei'
-            except AssertionError:
-                raise ValueError(
-                    "If working with a noisy function, please use 'nei' acquisition (using {} instead) do ".format(acq) 
-                )
+        # if(self.space.noisy):
+        #     try:
+        #         assert acq == 'nei'
+        #     except AssertionError:
+        #         raise ValueError(
+        #             "If working with a noisy function, please use 'nei' acquisition (using {} instead) do ".format(acq) 
+        #         )
             
         util = UtilityFunction(kind=acq, kappa=kappa, xi=xi,N_QMC=N_QMC)
         self.util = util

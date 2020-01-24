@@ -24,7 +24,7 @@ class _Tracker(object):
         if event == Events.OPTMIZATION_STEP:
             self._iterations += 1
 
-            current_max = instance.max
+            current_max = instance.real_max
             if (self._previous_max is None or
                 current_max["target"] > self._previous_max):
                 self._previous_max = current_max["target"]

@@ -58,7 +58,7 @@ class ScreenLogger(_Tracker):
         return s
 
     def _step(self, instance, colour=Colours.black):
-        res = instance.res[-1]
+        res = instance.real_res[-1]
         cells = []
 
         cells.append(self._format_number(self._iterations + 1))
@@ -82,8 +82,8 @@ class ScreenLogger(_Tracker):
 
     def _is_new_max(self, instance):
         if self._previous_max is None:
-            self._previous_max = instance.max["target"]
-        return instance.max["target"] > self._previous_max
+            self._previous_max = instance.real_max["target"]
+        return instance.real_max["target"] > self._previous_max
 
     def update(self, event, instance):
         if event == Events.OPTMIZATION_START:

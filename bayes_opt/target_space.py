@@ -75,7 +75,7 @@ class TargetSpace(object):
         self._discrete = np.array(discrete)
         # preallocated memory for X and Y points
         self._params = np.empty(shape=(0, self.dim))
-        self._target = np.empty(shape=(0))
+        self._normalized_target = np.empty(shape=(0))
 
         # keep track of unique points we have seen so far
         self._cache = {}
@@ -84,8 +84,8 @@ class TargetSpace(object):
         return _hashable(x) in self._cache
 
     def __len__(self):
-        assert len(self._params) == len(self._target)
-        return len(self._target)
+        assert len(self._params) == len(self._normalized_target)
+        return len(self._normalized_target)
 
     @property
     def empty(self):
@@ -121,8 +121,11 @@ class TargetSpace(object):
         return nx
 
     @property
-    def target(self):
-        return self._target
+    def normalized_target(self):
+        return self._normalized_target
+    @property
+    def real_target(self):
+        return self._normalized_target*self._norm_constant
 
     @property
     def dim(self):
@@ -217,7 +220,7 @@ class TargetSpace(object):
         self._cache[_hashable(x.ravel())] = target
 
         self._params = np.concatenate([self._params, x.reshape(1, -1)])
-        self._target = np.concatenate([self._target, [target]])
+        self._normalized_target = np.concatenate([self._normalized_target, [target]])
 
     def probe(self, params):
         """
@@ -280,26 +283,47 @@ class TargetSpace(object):
                 data.T[col]=data.T[col].round()
         return data.ravel()
 
-    def max(self):
+    def normalized_max(self):
         """Get maximum target value found and corresponding parametes."""
         try:
             res = {
-                'target': self.target.max(),
+                'target': self.normalized_target.max(),
                 'params': dict(
-                    zip(self._aug_keys, self.params[self.target.argmax()])
+                    zip(self._aug_keys, self.params[self.normalized_target.argmax()])
                 )
             }
         except ValueError:
             res = {}
         return res
 
-    def res(self):
-        """Get all target values found and corresponding parametes."""
+    def real_max(self):
+        """Get maximum target value found and corresponding parametes."""
+        try:
+            res = {
+                'target': self.real_target.max(),
+                'params': dict(
+                    zip(self._aug_keys, self.params[self.real_target.argmax()])
+                )
+            }
+        except ValueError:
+            res = {}
+        return res
+
+    def real_res(self):
+        """Get all target values found and corresponding parametes (un-normalized, i.e. multiplied by normalizarion constant)."""
         params = [dict(zip(self._aug_keys, p)) for p in self.params]
 
         return [
             {"target": target*self._norm_constant, "params": param}
-            for target, param in zip(self.target, params)
+            for target, param in zip(self.normalized_target, params)
+        ]
+    def normalized_res(self):
+        """Get all target values found and corresponding parametes (normalized)."""
+        params = [dict(zip(self._aug_keys, p)) for p in self.params]
+
+        return [
+            {"target": target, "params": param}
+            for target, param in zip(self.normalized_target, params)
         ]
 
     def set_bounds(self, new_bounds):

@@ -5,11 +5,13 @@ from scipy.optimize import minimize
 from sklearn.gaussian_process.kernels import Matern
 from sklearn.gaussian_process import GaussianProcessRegressor
 import sobol_seq
-from line_profiler import LineProfiler
-from joblib import Parallel, delayed
 import multiprocessing
 from time import time
-from copy import deepcopy
+
+from matplotlib import pyplot as plt
+
+
+
 
 class augKernel(Matern):
     def __init__(self, discrete=None ,length_scale=1.0, length_scale_bounds=(1e-5, 1e5),nu=1.5):
@@ -124,7 +126,8 @@ class Acquisitor():
         x_seeds = self.random_state.uniform(bounds[:, 0], bounds[:, 1],
                                         size=(n_rand_iter, bounds.shape[0]))
         
-        x_seeds = discretize(x_seeds,discrete,unique_shuffle=True)
+        if(len(x_seeds)>0):
+            x_seeds = discretize(x_seeds,discrete,unique_shuffle=True)
 
         for x_try in x_seeds:
             counter +=1
@@ -146,11 +149,22 @@ class Acquisitor():
                 # print("BESTED_>")
             if(self.opt.print_timing):
                 print("done {}/{} in {}".format(counter,n_rand_iter+n_best_iter,time()-t))
+        ys = self.ac(x_tries, opt=self.opt,parall=low_level_parall,pool=pool)
         if(low_level_parall):
             pool.close()
         # Clip output to make sure it lies within the bounds. Due to floating
         # point technicalities this is not always the case.
         x_max = np.array(discretize([x_max],discrete)[0])
+        # fig, (ax1,ax2) = plt.subplots(2, 1,figsize=(15,5))
+        # mean,std = self.opt._gp.predict(x_tries.reshape(-1,1),return_std=True)
+        # ax1.plot(x_tries, mean, 'b.')
+        # ax1.plot(x_tries, mean+std, 'r.')
+        # ax1.plot(x_tries, mean-std, 'r.')
+        # ax2.plot(x_tries,ys,'k.')
+        # ax2.plot(x_max,max_acq,'r.')
+        # plt.draw()
+        # plt.pause(0.5)
+        # plt.clf()
         return np.clip(x_max, bounds[:, 0], bounds[:, 1])
 
     def acq_step(self,x_try):
@@ -241,13 +255,13 @@ class UtilityFunction(object):
         else:
             self.kind = kind
 
-    def utility(self, x, opt,parall = False,pool=None):
+    def utility(self, x, opt,parall = False,pool=None,**params):
         self.counter +=1
         # print(self.counter)
         if self.kind == 'ucb':
             return self._ucb(x, opt, self.kappa)
         if self.kind == 'ei':
-            return self._ei(x, opt, self.xi)
+            return self._ei(x, opt, self.xi,**params)
         if self.kind == 'poi':
             return self._poi(x, opt, self.xi)
         if self.kind == 'nei':
@@ -261,6 +275,15 @@ class UtilityFunction(object):
                 # t = time()
                 if( not parall):
                     e =self._Nei(x,opt,self.xi,N_QMC=self.N_QMC)
+                    # if(len(x)>10):
+                    #     e1 = self._ei(x, opt, self.xi)
+                    #     fig, (ax1,ax2) = plt.subplots(2, 1,figsize=(15,5))
+                    #     ax1.plot(x,e1,'r.')
+                    #     ax2.plot(x,e,'r.')
+                    #     plt.draw()
+                    #     plt.pause(0.1)
+                    #     plt.clf()
+                    #     self._Nei(x[np.argmax(e)],opt,self.xi,N_QMC=self.N_QMC)
                 if(parall):
                     e = self.parall_Nei(x,opt,pool,self.xi,N_QMC=self.N_QMC)
                 # t = time()-t
@@ -290,10 +313,21 @@ class UtilityFunction(object):
         discrete = opt._space.discrete
         x = discretize(x,discrete)
         pars = opt._space.params #add batches here as np.concatenate((opt._space.params,previousBatches))
-        mean, cov = gp.predict(pars,return_cov = True)
+        # mean, cov = gp.predict(pars,return_cov = True)
+        mean,std = gp.predict(pars,return_std = True)
+        # try:
+        #     A = np.linalg.cholesky(cov)
+        # except:
+        #     try:
+        #         A= scipy.linalg.cholesky(cov, lower=True)
+        #         raise ValueError(
+        #                 "covariance problem \n {} \n BUT SCIPY WORKED {}".format(cov,A) 
+        #             )
+        #     except:
+        #         raise ValueError(
+        #                 "covariance problem \n {} \n Eigenvalues: \n{}".format(cov,np.linalg.eigvalsh(cov)) 
+        #             )
         # A = gp.L_
-        A = np.linalg.cholesky(cov)
-
         NEI = 0
         tks = sobol_seq.i4_sobol_generate(len(pars), N_QMC)
         for k in range(N_QMC):#quasi monte carlo integration (QMC)
@@ -306,7 +340,8 @@ class UtilityFunction(object):
                 random_state=k,
                 )
             tk = tks[k]
-            Fn = (np.diag(A)*norm.ppf(tk) + mean).tolist() #generate pseudorandom noisless observations from noisy observations
+            # Fn = (np.diag(A)*norm.ppf(tk) + mean).tolist() #generate pseudorandom noisless observations from noisy observations
+            Fn = norm.ppf(tk,loc=mean,scale=std)
             with warnings.catch_warnings():#Do not print gp warnings
                 warnings.simplefilter("ignore")    
                 gpk.fit(pars,Fn)#fit gaussian process with pseudorandom observations
@@ -320,8 +355,9 @@ class UtilityFunction(object):
         x = discretize(x,discrete)
         pars = opt._space.params #add batches here as np.concatenate((opt._space.params,previousBatches))
         mean, cov = gp.predict(pars,return_cov = True)
-        # A = gp.L_
         A = np.linalg.cholesky(cov)
+
+        # A = gp.L_
         tks = sobol_seq.i4_sobol_generate(len(pars), N_QMC)
 
         args = [(opt,pars,x,discrete,k,tks,A,mean,N_QMC,xi) for k in range(N_QMC)]
@@ -355,7 +391,7 @@ class UtilityFunction(object):
         x = discretize(x,opt._space.discrete)
         if(overGP is None):
             gp = opt._gp
-            y_max = opt._space.max()['target']
+            y_max = opt._space.normalized_max()['target']
         else:
             gp = overGP
             y_max = overY_max
