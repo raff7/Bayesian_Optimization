@@ -5,11 +5,8 @@ from scipy.optimize import minimize
 from sklearn.gaussian_process.kernels import Matern
 from sklearn.gaussian_process import GaussianProcessRegressor
 import sobol_seq
-from line_profiler import LineProfiler
-from joblib import Parallel, delayed
 import multiprocessing
 from time import time
-from copy import deepcopy
 
 class augKernel(Matern):
     def __init__(self, discrete=None ,length_scale=1.0, length_scale_bounds=(1e-5, 1e5),nu=1.5):
