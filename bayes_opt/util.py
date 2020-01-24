@@ -354,13 +354,16 @@ class UtilityFunction(object):
         discrete = opt._space.discrete
         x = discretize(x,discrete)
         pars = opt._space.params #add batches here as np.concatenate((opt._space.params,previousBatches))
-        mean, cov = gp.predict(pars,return_cov = True)
-        A = np.linalg.cholesky(cov)
+        # mean, cov = gp.predict(pars,return_cov = True)
+        # A = np.linalg.cholesky(cov)
+        mean,std = gp.predict(pars,return_std = True)
 
         # A = gp.L_
         tks = sobol_seq.i4_sobol_generate(len(pars), N_QMC)
 
-        args = [(opt,pars,x,discrete,k,tks,A,mean,N_QMC,xi) for k in range(N_QMC)]
+        # args = [(opt,pars,x,discrete,k,tks,A,mean,N_QMC,xi) for k in range(N_QMC)]
+        args = [(opt,pars,x,discrete,k,tks,std,mean,N_QMC,xi) for k in range(N_QMC)]
+
         results = pool.map(self.MCstep,args)
         # results = Parallel(n_jobs=num_cores,backend=backend)(delayed(self.MCstep)(opt,pars,x,discrete,k,tks,A,mean,N_QMC,xi) for k in range(N_QMC))
         
@@ -368,7 +371,8 @@ class UtilityFunction(object):
 
     def MCstep(self,args):
         # for parallel NEI
-        opt,pars,x,discrete,k,tks,A,mean,N_QMC,xi = args
+        # opt,pars,x,discrete,k,tks,A,mean,N_QMC,xi = args
+        opt,pars,x,discrete,k,tks,std,mean,N_QMC,xi = args
         gpk=GaussianProcessRegressor(
             kernel=augKernel(nu=opt._gp.kernel.nu,discrete=discrete),
             alpha=0.0000001,
@@ -377,7 +381,8 @@ class UtilityFunction(object):
             random_state=k,
             )
         tk = tks[k]
-        Fn = (np.diag(A)*norm.ppf(tk) + mean).tolist() #generate pseudorandom noisless observations from noisy observations
+        # Fn = (np.diag(A)*norm.ppf(tk) + mean).tolist() #generate pseudorandom noisless observations from noisy observations
+        Fn = norm.ppf(tk,loc=mean,scale=std)
         with warnings.catch_warnings():#Do not print gp warnings
             warnings.simplefilter("ignore")    
             gpk.fit(pars,Fn)#fit gaussian process with pseudorandom observations

@@ -114,7 +114,7 @@ class JSONLogger(_Tracker):
 
     def update(self, event, instance):
         if event == Events.OPTMIZATION_STEP:
-            data = dict(instance.res[-1])
+            data = dict(instance.real_res[-1])
 
             now, time_elapsed, time_delta = self._time_metrics()
             data["datetime"] = {
