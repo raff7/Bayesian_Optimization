@@ -41,7 +41,9 @@ def f(x,a=0):
     return r
 
 def noise(**params):
-    return hartmann6d(**params) + np.random.normal(loc=0,scale=10)
+    return hartmann6d(**params) + np.random.normal(loc=0,scale=0.2)
+def noise2d(**params):
+    return f(**params) + np.random.normal(loc=0,scale=0.2)
 def fr(a=0,b=0,c=0,d=0,x=0,y=0,z=0):
     if(isinstance(x,float)):
         x= round(x)
@@ -95,7 +97,7 @@ def gpFit(X,y):
     plt.pause(0.5)
     plt.clf()
 
-def plot(optimizer,nextPlt):
+def plot(optimizer):
     #plotter for 1d function
     fNorm = lambda x:f(x)/optimizer._norm_constant
     X = optimizer._space.params
@@ -270,48 +272,49 @@ def plot2DCont(optimizer):
 # plt.ion()
 # pbounds = {'x': (-25   , 25)}
 pbounds ={'x1':(0,1),'x2':(0,1),'x3':(0,1),'x4':(0,1),'x5':(0,1),'x6':(0,1)}
-expectedYbounds = (-1,200)
+# expectedYbounds = (-10,15)
+expectedYbounds = (-4,4)
 optimizer = BayesianOptimization(
     f=noise,
     pbounds=pbounds,
     yrange = expectedYbounds,
     verbose=2,
-    random_state=2, 
-    alpha=10,
+    random_state=0, 
+    alpha=0.2,
     noisy=True,
     parall_option=2,
     print_timing=True,
   
 )
 # load_logs(optimizer, logs=["./logs.json"])
-logger = JSONLogger(path="./logs_NEI.json")
-optimizer.subscribe(Events.OPTMIZATION_STEP, logger)
+# logger = JSONLogger(path="./logs_EI.json")
+# optimizer.subscribe(Events.OPTMIZATION_STEP, logger)
 # optimizer.probe(params=[1],lazy=False,)
 nex = None
 
     
-optimizer.maximize(
-        init_points=5,
-        n_iter=50,
-        acq='nei',
-        xi=0.00,
-        N_QMC=20,
-        optimizer_best_trials=3,
-        optimizer_random_trials=10,
-        optimizer_n_warmups=30000
-    )
-# plot(optimizer,nex) 
-# for i in range(100):
-#     t = time.time()
-#     optimizer.maximize(
-#         init_points=0,
-#         n_iter=1,
+# optimizer.maximize(
+#         init_points=5,
+#         n_iter=50,
 #         acq='ei',
-#         xi=0.00,
+#         xi=0.001,
 #         N_QMC=20,
-#         optimizer_best_trials=2,
+#         optimizer_best_trials=3,
 #         optimizer_random_trials=10,
-#         optimizer_n_warmups=10000
+#         optimizer_n_warmups=30000
 #     )
-#     plot(optimizer,nex)
+# plot(optimizer,nex) 
+for i in range(100):
+    t = time.time()
+    optimizer.maximize(
+        init_points=0,
+        n_iter=1,
+        acq='ei',
+        xi=0.10,
+        N_QMC=20,
+        optimizer_best_trials=2,
+        optimizer_random_trials=10,
+        optimizer_n_warmups=10000
+    )
+    # plot(optimizer)
 #     print("Timing: {} seconds ({} minutes)".format(time.time()-t,(time.time()-t)/60))
