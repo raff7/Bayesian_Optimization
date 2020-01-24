@@ -238,39 +238,39 @@ def plot2DCont(optimizer):
     plt.pause(0.5)
     plt.clf()
 
-plt.ion()
-pbounds = {'x': (-20   , 20)}
-# pbounds ={'x1':(0,1),'x2':(0,1),'x3':(0,1),'x4':(0,1),'x5':(0,1),'x6':(0,1)}
-expectedYbounds = (-10,15)
-# expectedYbounds = (-3,3)
+# plt.ion()
+# pbounds = {'x': (-20   , 20)}
+pbounds ={'x1':(0,1),'x2':(0,1),'x3':(0,1),'x4':(0,1),'x5':(0,1),'x6':(0,1)}
+# expectedYbounds = (-10,15)
+expectedYbounds = (-3,3)
 optimizer = BayesianOptimization(
-    f=noise2D,
+    f=noise,
     pbounds=pbounds,
     yrange = expectedYbounds,
     verbose=2,
-    random_state=1, 
+    random_state=0, 
     alpha=0.2,
     noisy=True,
     parall_option=1,
-    print_timing=False
+    print_timing=True
   
 )
 # load_logs(optimizer, logs=["./logs.json"])
-# logger = JSONLogger(path="./logs_EI.json")
-# optimizer.subscribe(Events.OPTMIZATION_STEP, logger)
+logger = JSONLogger(path="./logs_EI.json")
+optimizer.subscribe(Events.OPTMIZATION_STEP, logger)
 # optimizer.probe(params=[1],lazy=False,)
 
-for i in range(100):
+for i in range(1):
     t = time.time()
     optimizer.maximize(
-        init_points=0,
-        n_iter=1,
+        init_points=5,
+        n_iter=50,
         acq='ei',
-        xi=0.10,
+        xi=0.1,
         N_QMC=25,
-        optimizer_best_trials=2,
-        optimizer_random_trials=250,
+        optimizer_best_trials=5,
+        optimizer_random_trials=20,
         optimizer_n_warmups=20000
     )
-    plot(optimizer)
+    # plot(optimizer)
     print("Timing: {} seconds ({} minutes)".format(time.time()-t,(time.time()-t)/60))
