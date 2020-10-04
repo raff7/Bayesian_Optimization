@@ -1,3 +1,7 @@
+This repository starts as a fork of fmfn/BayesianOptimization, to which improvements are added.
+
+
+
 <div align="center">
   <img src="https://github.com/fmfn/BayesianOptimization/blob/master/examples/func.png"><br><br>
 </div>
